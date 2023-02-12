@@ -1,0 +1,39 @@
+{
+    "name": "kieranfyi/tracking-core",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "KieranFYI\\Tracking\\Core\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KieranFYI\\Tests\\Tracking\\Core\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Kieran",
+            "email": "kieran@andersons.bz"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+                "KieranFYI\\Tracking\\Core\\Providers\\TrackingCorePackageServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^9.19",
+        "kieranfyi/misc": "^0.3",
+        "kieranfyi/logging": "^0.3",
+        "kieranfyi/services-core": "^0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "orchestra/testbench": "^7.19"
+    }
+}

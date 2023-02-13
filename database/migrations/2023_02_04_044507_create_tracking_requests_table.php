@@ -29,6 +29,10 @@ return new class extends Migration {
             $table->boolean('trusted_proxy');
             $table->string('user_agent')
                 ->index();
+            $table->string('referer')
+                ->nullable();
+            $table->integer('status_code')
+                ->nullable();
             $table->timestamps();
 
             $table->index(['tracking_id', 'tracking_item_id']);

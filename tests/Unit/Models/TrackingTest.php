@@ -5,7 +5,6 @@ namespace KieranFYI\Tests\Tracking\Core\Unit\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
 use KieranFYI\Logging\Traits\LoggingTrait;
 use KieranFYI\Misc\Traits\HashTrait;
 use KieranFYI\Misc\Traits\ImmutableTrait;

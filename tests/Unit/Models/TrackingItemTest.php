@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
 use KieranFYI\Logging\Traits\LoggingTrait;
 use KieranFYI\Misc\Traits\HashTrait;
 use KieranFYI\Misc\Traits\ImmutableTrait;
@@ -87,6 +86,11 @@ class TrackingItemTest extends TestCase
         $testModel = new TestModel();
         $this->model->trackable()->associate($testModel);
         $this->assertTrue($testModel->is($this->model->trackable));
+    }
+
+    public function testRequests()
+    {
+        $this->markTestIncomplete();
     }
 
     public function testGetUrlAttribute()

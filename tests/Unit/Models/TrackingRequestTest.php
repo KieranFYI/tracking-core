@@ -44,7 +44,7 @@ class TrackingRequestTest extends TestCase
     public function testFillable()
     {
         $this->assertEquals([
-            'ip', 'ips', 'trusted_proxy', 'user_agent'
+            'ip', 'ips', 'trusted_proxy', 'user_agent', 'referer', 'status_code'
         ], $this->model->getFillable());
     }
 
@@ -53,6 +53,7 @@ class TrackingRequestTest extends TestCase
         $this->assertEquals([
             'ips' => 'array',
             'trusted_proxy' => 'boolean',
+            'status_code' => 'int',
             'id' => 'int',
         ], $this->model->getCasts());
     }

@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Schema;
 use KieranFYI\Tests\Tracking\Core\Models\AuthModel;
 use KieranFYI\Tests\Tracking\Core\Models\TestModel;
 use KieranFYI\Tests\Tracking\Core\TestCase;
-use KieranFYI\Tracking\Core\Models\Tracking;
 use KieranFYI\Tracking\Core\Models\TrackingItem;
+use KieranFYI\Tracking\Core\Models\Tracking;
 use KieranFYI\Tracking\Core\Models\TrackingRedirect;
 use KieranFYI\Tracking\Core\Services\TrackingService;
 use TypeError;
@@ -32,27 +32,29 @@ class TrackingServiceTest extends TestCase
         });
     }
 
-    public function testAsParent()
+    public function testParent()
     {
         $this->artisan('migrate');
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () use ($parent) {
-            $this->assertTrue($parent->is($this->service->tracking()->parent));
-        });
-        $this->assertNull($this->service->tracking());
+        $this->service
+            ->parent($parent);
+        $this->assertTrue($parent->is($this->service->tracking()->parent));
     }
 
-    public function testAsParentExisting()
+    public function testParentExisting()
     {
         $this->artisan('migrate');
         $parent = TestModel::create([]);
         $tracking = new Tracking();
-        $tracking->parent()->associate($parent);
+        $tracking->parent()
+            ->associate($parent);
         $tracking->save();
 
-        $this->service->asParent($parent, function () use ($tracking) {
-            $this->assertTrue($tracking->is($this->service->tracking()));
-        });
+        $this->service
+            ->parent($parent)
+            ->group(function () use ($tracking) {
+                $this->assertTrue($tracking->is($this->service->tracking()));
+            });
     }
 
     public function testTrack()
@@ -60,18 +62,21 @@ class TrackingServiceTest extends TestCase
         $this->artisan('migrate');
 
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $trackable = TrackingRedirect::create(['redirect' => 'https://www.example.com/']);
-            $item = $this->service->track($trackable);
-            $this->assertInstanceOf(TrackingItem::class, $item);
-        });
+        $this->service
+            ->parent($parent)
+            ->group(function () {
+                $trackable = TrackingRedirect::create(['redirect' => 'https://www.example.com/']);
+                $item = $this->service->track($trackable);
+                $this->assertInstanceOf(TrackingItem::class, $item);
+            });
     }
 
     public function testTrackNullParent()
     {
         $trackable = new TestModel();
         $this->expectException(TypeError::class);
-        $this->service->track($trackable);
+        $this->service
+            ->track($trackable);
     }
 
     public function testTrackInvalidTrackingInterface()
@@ -79,11 +84,14 @@ class TrackingServiceTest extends TestCase
         $this->artisan('migrate');
 
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $trackable = new TestModel();
-            $this->expectException(TypeError::class);
-            $this->service->track($trackable);
-        });
+        $this->service
+            ->parent($parent)
+            ->group(function () {
+                $trackable = new TestModel();
+                $this->expectException(TypeError::class);
+                $this->service
+                    ->track($trackable);
+            });
     }
 
     public function testTrackUserNotNull()
@@ -96,13 +104,17 @@ class TrackingServiceTest extends TestCase
         $this->artisan('migrate');
 
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $user = AuthModel::create([]);
-            $trackable = TrackingRedirect::create(['redirect' => 'https://www.example.com/']);
-            $item = $this->service->track($trackable, $user);
-            $this->assertInstanceOf(TrackingItem::class, $item);
-            $this->assertTrue($user->is($item->user));
-        });
+        $user = AuthModel::create([]);
+        $this->service
+            ->parent($parent)
+            ->user($user)
+            ->group(function () use ($user) {
+                $trackable = TrackingRedirect::create(['redirect' => 'https://www.example.com/']);
+                $item = $this->service
+                    ->track($trackable);
+                $this->assertInstanceOf(TrackingItem::class, $item);
+                $this->assertTrue($user->is($item->user));
+            });
     }
 
     public function testTrackCreatedByNotNull()
@@ -119,16 +131,20 @@ class TrackingServiceTest extends TestCase
     {
         $this->artisan('migrate');
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $item = $this->service->redirect('https://www.example.com/');
-            $this->assertInstanceOf(TrackingItem::class, $item);
-        });
+        $this->service
+            ->parent($parent)
+            ->group(function () {
+                $item = $this->service
+                    ->redirect('https://www.example.com/');
+                $this->assertInstanceOf(TrackingItem::class, $item);
+            });
     }
 
     public function testRedirectNullParent()
     {
         $this->expectException(TypeError::class);
-        $this->service->redirect('https://www.example.com/');
+        $this->service
+            ->redirect('https://www.example.com/');
     }
 
     public function testRedirectUserNotNull()
@@ -140,25 +156,30 @@ class TrackingServiceTest extends TestCase
         });
         $this->artisan('migrate');
 
+        $user = AuthModel::create([]);
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $user = AuthModel::create([]);
-            $item = $this->service->redirect('https://www.example.com/', $user);
-            $this->assertInstanceOf(TrackingItem::class, $item);
-            $this->assertTrue($user->is($item->user));
-        });
+        $this->service
+            ->user($user)
+            ->parent($parent)
+            ->group(function () use ($user) {
+                $item = $this->service->redirect('https://www.example.com/');
+                $this->assertInstanceOf(TrackingItem::class, $item);
+                $this->assertTrue($user->is($item->user));
+            });
     }
 
     public function testRedirectExistingItem()
     {
         $this->artisan('migrate');
         $parent = TestModel::create([]);
-        $this->service->asParent($parent, function () {
-            $item = $this->service->redirect('https://www.example.com/');
-            $this->assertInstanceOf(TrackingItem::class, $item);
-            $response = $this->service->redirect('https://www.example.com/');
-            $this->assertTrue($item->is($response));
-        });
+        $this->service
+            ->parent($parent)
+            ->group(function () {
+                $item = $this->service->redirect('https://www.example.com/');
+                $this->assertInstanceOf(TrackingItem::class, $item);
+                $response = $this->service->redirect('https://www.example.com/');
+                $this->assertTrue($item->is($response));
+            });
     }
 
 }

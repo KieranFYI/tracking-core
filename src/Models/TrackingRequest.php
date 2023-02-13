@@ -14,8 +14,10 @@ use Illuminate\Foundation\Auth\User;
  * @property array $ips
  * @property bool $trusted_proxy
  * @property string $user_agent
+ * @property string $referer
+ * @property int $status_code
  * @property Tracking $tracking
- * @property TrackingItem $trackingItem
+ * @property TrackingItem $item
  * @property User $user
  */
 class TrackingRequest extends Model
@@ -27,7 +29,7 @@ class TrackingRequest extends Model
      * @var string[]
      */
     protected $fillable = [
-        'ip', 'ips', 'trusted_proxy', 'user_agent'
+        'ip', 'ips', 'trusted_proxy', 'user_agent', 'referer', 'status_code'
     ];
 
     /**
@@ -35,7 +37,8 @@ class TrackingRequest extends Model
      */
     protected $casts = [
         'ips' => 'array',
-        'trusted_proxy' => 'boolean'
+        'trusted_proxy' => 'boolean',
+        'status_code' => 'int',
     ];
 
     /**
@@ -51,7 +54,7 @@ class TrackingRequest extends Model
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(TrackingItem::class);
+        return $this->belongsTo(TrackingItem::class, 'tracking_item_id');
     }
 
     /**

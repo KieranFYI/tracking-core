@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
+use KieranFYI\Tracking\Core\Facades\Tracking as TrackingFacade;
 use KieranFYI\Tracking\Core\Interfaces\TrackingInterface;
 use KieranFYI\Tracking\Core\Models\Tracking;
 use KieranFYI\Tracking\Core\Models\TrackingItem;
@@ -20,11 +21,15 @@ class TrackingService
     private ?Tracking $tracking = null;
 
     /**
-     * @param Model $parent
-     * @param callable $callable
-     * @return void
+     * @var User|null
      */
-    public function asParent(Model $parent, callable $callable): void
+    private ?User $user = null;
+
+    /**
+     * @param Model $parent
+     * @return TrackingService
+     */
+    public function parent(Model $parent): static
     {
         $this->tracking = Tracking::where('parent_type', $parent->getMorphClass())
             ->where('parent_id', $parent->getKey())
@@ -36,8 +41,7 @@ class TrackingService
             $this->tracking->save();
         }
 
-        $callable();
-        $this->tracking = null;
+        return $this;
     }
 
     /**
@@ -49,11 +53,32 @@ class TrackingService
     }
 
     /**
+     * @param User $user
+     * @return $this
+     */
+    public function user(User $user): static
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * @param callable $callable
+     * @return void
+     */
+    public function group(callable $callable): void
+    {
+        TrackingFacade::swap($this);
+        $callable();
+        TrackingFacade::clearResolvedInstances();
+    }
+
+    /**
      * @param Model $trackable
      * @param User|null $user
      * @return TrackingItem
      */
-    public function track(Model $trackable, User $user = null): TrackingItem
+    public function track(Model $trackable): TrackingItem
     {
         if (is_null($this->tracking)) {
             throw new TypeError(self::class . '::track(): $tracking must be of type ' . Tracking::class);
@@ -66,9 +91,9 @@ class TrackingService
             ->where('trackable_type', $trackable->getMorphClass())
             ->where('trackable_id', $trackable->getKey());
 
-        if (!is_null($user)) {
-            $item->where('user_type', $user->getMorphClass())
-                ->where('user_id', $user->getKey());
+        if (!is_null($this->user)) {
+            $item->where('user_type', $this->user->getMorphClass())
+                ->where('user_id', $this->user->getKey());
         }
         $item = $item->first();
 
@@ -76,7 +101,7 @@ class TrackingService
             $item = new TrackingItem();
             $item->tracking()->associate($this->tracking);
             $item->trackable()->associate($trackable);
-            $item->user()->associate($user);
+            $item->user()->associate($this->user);
             $item->createdBy()->associate(Auth::user());
             $item->save();
         }
@@ -84,7 +109,12 @@ class TrackingService
         return $item;
     }
 
-    public function redirect(string $url, User $user = null)
+    /**
+     * @param string $url
+     * @param User|null $user
+     * @return TrackingItem
+     */
+    public function redirect(string $url): TrackingItem
     {
         if (is_null($this->tracking)) {
             throw new TypeError(self::class . '::track(): $tracking must be of type ' . Tracking::class);
@@ -95,9 +125,9 @@ class TrackingService
                 $query->where('redirect', $url);
             });
 
-        if (!is_null($user)) {
-            $item->where('user_type', $user->getMorphClass())
-                ->where('user_id', $user->getKey());
+        if (!is_null($this->user)) {
+            $item->where('user_type', $this->user->getMorphClass())
+                ->where('user_id', $this->user->getKey());
         }
 
         $item = $item->first();
@@ -109,7 +139,7 @@ class TrackingService
             'redirect' => $url
         ]);
 
-        return $this->track($trackable, $user);
+        return $this->track($trackable);
     }
 
 }
